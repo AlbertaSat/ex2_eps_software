@@ -1,245 +1,203 @@
 /*
  * ina3221.c
  *
- *  Created on: Jan 16, 2020
- *      Author: jdlazaru
+ *  Created on: Jul 8, 2020
+ *      Author: vince montero
  */
 
-
-
-//
-//   SDL_Arduino_INA3221 Library
-//   SDL_Arduino_INA3221.cpp Arduino code - runs in continuous mode
-//   Version 1.2
-//   SwitchDoc Labs   September 2019
-//
-//
-
-
-
-/*
-    Initial code from INA219 code (Basically just a core structure left)
-    @author   K.Townsend (Adafruit Industries)
-    @license  BSD (see BSDlicense.txt)
-*/
-
-
-//THINGS TO DO
-//
-//wireWriteRegister --- DONE
-//wireReadRegister --- DONE
-//INA3221SetConfig --- DONE
-//SDL_Arduino_INA3221
-//begin --- DONE
-//getBusVoltage_raw --- DONE
-//getShuntVoltage_raw --- DONE
-//getShuntVoltage_mV --- DONE
-//getBusVoltage_V --- DONE
-//getCurrent_mA --- DONE
-//getManufID --- DONE
-//
-//Change cpp stuff to c
-//
-//
-//
-
-//#if ARDUINO >= 100
-// #include "Arduino.h"
-//#else
-// #include "WProgram.h"
-//#endif
-
-//#include <Wire.h>
-#include "i2c.h"
-#include "reg_i2c.h"
 #include "ina3221.h"
-
-//#include "SDL_Arduino_INA3221.h"
-
-#define I2CBASE i2cREG1
+#include "HL_i2c.h"
 /**************************************************************************/
 /*!
-    @brief  Sends a single command byte over I2C
+    @brief  Configures the ina3221 to desired settings, these are
+    currently hard coded in
 */
 /**************************************************************************/
-void wireWriteRegister(uint8_t reg, uint16_t value)
+void ina3221Config(void)
 {
-  //Wire.beginTransmission(INA3221_i2caddr);
-  i2cSetSlaveAdd(I2CBASE, INA3221_ADDRESS);
-//  #if ARDUINO >= 100
-//    Wire.write(reg);                       // Register
-//    Wire.write((value >> 8) & 0xFF);       // Upper 8-bits
-//    Wire.write(value & 0xFF);              // Lower 8-bits
-//  #else
-//    Wire.send(reg);                        // Register
-//    Wire.send(value >> 8);                 // Upper 8-bits
-//    Wire.send(value & 0xFF);               // Lower 8-bits
-//  #endif
-  i2cSendByte(I2CBASE, reg);
-  i2cSend(I2CBASE,2,value);
+     uint8 config_reg = 0x00U;
+       // config data
+       uint8 configUpperByte = 0x75;
+       uint8 configLowerByte = 0x27;
+       /*Initializing i2c*/
+       i2cInit();
+       i2cSetDirection(i2cREG1,I2C_TRANSMITTER);
+       i2cSetCount(i2cREG1, 3);
+       i2cSetMode(i2cREG1,I2C_MASTER);
+       /*Setting address for address phase*/
+       i2cSetSlaveAdd(i2cREG1, INA3221_ADDRESS);
+       /*Transmit start condition*/
+       i2cSetStart(i2cREG1);
+       /*setting the register pointer*/
+       i2cSendByte(i2cREG1, config_reg);
 
-  //Wire.endTransmission();
+       i2cSendByte(i2cREG1, configUpperByte);
+       i2cSendByte(i2cREG1, configLowerByte);
+       i2cClearSCD(i2cREG1);
+       //small delay so all bytes send
+       int i;
+       for(i = 0; i<10000; i++);
+       return;
 }
-
 /**************************************************************************/
 /*!
-    @brief  Reads a 16 bit values over I2C
+    @brief  Sets the register pointer value for the ina3221, to read a
+    register the register pointer must first be set
+    @param reg - this is the value that the register pointer is set to
 */
 /**************************************************************************/
-void wireReadRegister(uint8_t reg, uint16_t *value)
+void ina3221SetRegisterPointer(uint8 reg)
 {
-
-  //Wire.beginTransmission(INA3221_i2caddr);
-    i2cSetSlaveAdd(I2CBASE, INA3221_ADDRESS);
-
-//  #if ARDUINO >= 100
-//    Wire.write(reg);                       // Register
-//  #else
-//    Wire.send(reg);                        // Register
-//  #endif
-    i2cSendByte(I2CBASE,reg);
-
-  //Wire.endTransmission();
-
-  delay(1); // Max 12-bit conversion time is 586us per sample
-
-//  Wire.requestFrom(INA3221_i2caddr, (uint8_t)2);
-//  #if ARDUINO >= 100
-//    // Shift values to create properly formed integer
-//    *value = ((Wire.read() << 8) | Wire.read());
-//  #else
-//    // Shift values to create properly formed integer
-//    *value = ((Wire.receive() << 8) | Wire.receive());
-//  #endif
-
-  //does direction need to be set?
-  //does a function need to be called in place of requestFrom?
-  i2cReceive(I2CBASE, 2, value);//make sure value is ok not being a pointer
+    /* RESET REGISTER POINTER VALUE */
+       i2cInit();
+       i2cSetDirection(i2cREG1,I2C_TRANSMITTER);
+       i2cSetCount(i2cREG1, 1);
+       i2cSetMode(i2cREG1,I2C_MASTER);
+       /*Setting address for address phase*/
+       i2cSetSlaveAdd(i2cREG1, INA3221_ADDRESS);
+       uint8 reg_pointer_val = reg;
+       /*Setting the value of the register pointer*/
+       i2cSetStart(i2cREG1);
+       i2cSendByte(i2cREG1, reg_pointer_val); //reset the register pointer to bus voltage reg
+       /* Wait until Bus Busy is cleared */
+       while(i2cIsBusBusy(i2cREG1) == true);
+       /* Wait until Stop is detected */
+       while(i2cIsStopDetected(i2cREG1) == 0);
+       /* Clear the Stop condition */
+       i2cClearSCD(i2cREG1);
+       return;
 }
-
-//
-void INA3221SetConfig(void)
+/**************************************************************************/
+/*!
+    @brief  Writes data to a register, the data must be split into an upper
+    byte (MSByte) and a lower byte (LSByte)
+    @param reg - the value of the register to be written
+    @param Data_MSByte - the upper byte of the data that is to be written
+    @param Data_LSByte - the lower byte of the data that is to be written
+*/
+/**************************************************************************/
+void ina3221WriteRegister(uint8 reg, uint8 Data_MSByte, uint8 Data_LSByte)
 {
-
-
-  // Set Config register to take into account the settings above
-  uint16_t config = INA3221_CONFIG_ENABLE_CHAN1 |
-                    INA3221_CONFIG_ENABLE_CHAN2 |
-                    INA3221_CONFIG_ENABLE_CHAN3 |
-                    INA3221_CONFIG_AVG1 |
-                    INA3221_CONFIG_VBUS_CT2 |
-                    INA3221_CONFIG_VSH_CT2 |
-                    INA3221_CONFIG_MODE_2 |
-                    INA3221_CONFIG_MODE_1 |
-                    INA3221_CONFIG_MODE_0;
-
-  wireWriteRegister(INA3221_REG_CONFIG, config);
+       /*Initializing i2c*/
+       i2cInit();
+       i2cSetDirection(i2cREG1,I2C_TRANSMITTER);
+       i2cSetCount(i2cREG1, 3);
+       i2cSetMode(i2cREG1,I2C_MASTER);
+       /*Setting address for address phase*/
+       i2cSetSlaveAdd(i2cREG1, INA3221_ADDRESS);
+       /*Transmit start condition*/
+       i2cSetStart(i2cREG1);
+       /*setting the register pointer*/
+       i2cSendByte(i2cREG1, reg);
+       i2cSendByte(i2cREG1, Data_MSByte);
+       i2cSendByte(i2cREG1, Data_LSByte);
+       i2cClearSCD(i2cREG1);
+       return;
 }
-
 /**************************************************************************/
 /*!
-    @brief  Instantiates a new SDL_Arduino_INA3221 class
+    @brief  Reads the register specified by the user
+    @param reg - the register pointer value of the register you wish to read
 */
 /**************************************************************************/
-//void SDL_Arduino_INA3221(uint8_t addr, float shuntresistor) {
-//
-//    INA3221_i2caddr = addr;
-//    INA3221_shuntresistor = shuntresistor;
-//
-//}
-
-/**************************************************************************/
-/*!
-    @brief  Setups the HW (defaults to 32V and 2A for calibration values)
-*/
-/**************************************************************************/
-void begin() {
-  //Wire.begin();
-  i2cInit();
-  // Set chip to known config values to start
-  INA3221SetConfig();
-
-   // Serial.print("shut resistor="); Serial.println(INA3221_shuntresistor);
-   // Serial.print("address="); Serial.println(INA3221_i2caddr);
-
-}
-
-/**************************************************************************/
-/*!
-    @brief  Gets the raw bus voltage (16-bit signed integer, so +-32767)
-*/
-/**************************************************************************/
-int16_t getBusVoltage_raw(int channel) {
-  uint16_t value;
-  wireReadRegister(INA3221_REG_BUSVOLTAGE_1+(channel -1) *2, &value);
-
-//    Serial.print("BusVoltage_raw=");
-//    Serial.println(value,HEX);
-
-  // Shift to the right 3 to drop CNVR and OVF and multiply by LSB
-  return (int16_t)(value );
-}
-
-/**************************************************************************/
-/*!
-    @brief  Gets the raw shunt voltage (16-bit signed integer, so +-32767)
-*/
-/**************************************************************************/
-int16_t getShuntVoltage_raw(int channel) {
-  uint16_t value;
-  wireReadRegister(INA3221_REG_SHUNTVOLTAGE_1+(channel -1) *2, &value);
-
-   // Serial.print("ShuntVoltage_raw=");
-   // Serial.println(value,HEX);
-
-  return (int16_t)value;
-}
-
-
-
-/**************************************************************************/
-/*!
-    @brief  Gets the shunt voltage in mV (so +-168.3mV)
-*/
-/**************************************************************************/
-float getShuntVoltage_mV(int channel) {
-  int16_t value;
-  value = getShuntVoltage_raw(channel);
-  return value * 0.005;
-}
-
-/**************************************************************************/
-/*!
-    @brief  Gets the shunt voltage in volts
-*/
-/**************************************************************************/
-float getBusVoltage_V(int channel) {
-  int16_t value = getBusVoltage_raw(channel);
-  return value * 0.001;
-}
-
-/**************************************************************************/
-/*!
-    @brief  Gets the current value in mA, taking into account the
-            config settings and current LSB
-*/
-/**************************************************************************/
-float getCurrent_mA(int channel) {
-    float valueDec = getShuntVoltage_mV(channel)/SHUNT_RESISTOR_VALUE;
-
-  return valueDec;
-}
-
-
-/**************************************************************************/
-/*!
-    @brief  Gets the Manufacturers ID
-*/
-/**************************************************************************/
-int getManufID()
+int16_t ina3221ReadRegister(uint8 reg)
 {
-  uint16_t value;
-  wireReadRegister(0xFE, &value);
-  return value;
-
+    int16_t value = 0;
+    ina3221SetRegisterPointer(reg);
+    /*READ THE REGISTER*/
+       uint8_t RX_Data_Master[2] = { 0 };
+       i2cInit();
+       /*Set direction*/
+       i2cSetDirection(i2cREG1,I2C_RECEIVER);
+       /* Configure Data count */
+       /* Note: Optional - It is done in Init, unless user want to change */
+       i2cSetCount(i2cREG1, 2);
+       /* Set mode as Master */
+       i2cSetMode(i2cREG1, I2C_MASTER);
+       /* Transmit Start Condition */
+       i2cSetStart(i2cREG1);
+       /* Transmit DATA_COUNT number of data in Polling mode */
+       i2cReceive(i2cREG1, 2, RX_Data_Master); //RX_Data_Master[0] is MSByte, RX_Data_Master[1] is LSByte
+       /* Wait until Stop is detected */
+       while(i2cIsStopDetected(i2cREG1) == 0);
+       /* Wait until Bus Busy is cleared */
+       while(i2cIsBusBusy(i2cREG1) == true);
+       /* Clear the Stop condition */
+       i2cClearSCD(i2cREG1);
+       value |= (RX_Data_Master[0] << 8);
+       value |= (RX_Data_Master[1]);
+       return value;
+}
+/**************************************************************************/
+/*!
+    @brief  Reads a channel's bus voltage register, and returns it
+    @param channel - can either be 1, 2, or 3, and is the channel you wish to read
+    if any other number is used, the channel is set to 1
+*/
+/**************************************************************************/
+double ina3221GetBusVoltage_V(int channel)
+{
+    uint8 register_pointer;
+    int16_t register_data;
+    /*selecting the channel to be read*/
+    switch (channel)
+    {
+        case 1:
+        register_pointer = 0x02;
+        break;
+        case 2:
+        register_pointer = 0x04;
+        break;
+        case 3:
+        register_pointer = 0x06;
+        break;
+        /*the default channel is channel 1*/
+        default:
+        register_pointer = 0x02;
+    }
+    register_data = ina3221ReadRegister(register_pointer);
+    /*converting the data to float, obtaining absolute value of bus voltage*/
+    register_data = ina3221ReadRegister(register_pointer);
+    return register_data * 0.001;
+}
+/**************************************************************************/
+/*!
+    @brief  Reads a channel's shunt voltage register and returns it
+    @param channel - can either be 1, 2, or 3, and is the channel you wish to read
+    if any other number is used, the channel is set to 1
+*/
+/**************************************************************************/
+double ina3221GetShuntVoltage_mV(int channel)
+{
+    uint8 register_pointer;
+    int16_t register_data;
+    double shunt_voltage;
+    /*selecting the channel to be read*/
+    switch (channel)
+    {
+        case 1:
+        register_pointer = 0x02;
+        break;
+        case 2:
+        register_pointer = 0x04;
+        break;
+        case 3:
+        register_pointer = 0x06;
+        break;
+        /*the default channel is channel 1*/
+        default:
+        register_pointer = 0x02;
+    }
+   register_data = ina3221ReadRegister(register_pointer);
+   shunt_voltage = register_data * 0.005;
+   return shunt_voltage;
+}
+/**************************************************************************/
+/*!
+    @brief  Returns the manufacturer ID
+*/
+/**************************************************************************/
+int ina3221GetManufID(void)
+{
+    return (int) ina3221ReadRegister(0xFE);
 }
