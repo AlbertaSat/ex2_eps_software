@@ -191,10 +191,10 @@ typedef struct i2c_config_reg
 #define I2C_PSC_CONFIGVALUE         9U
 #define I2C_DMAC_CONFIGVALUE        0x00000000U 
 #define I2C_FUN_CONFIGVALUE         0U  
-#define I2C_DIR_CONFIGVALUE       ((uint32)((uint32)0U << 1U) \
-                                 | (uint32)((uint32)0U))
-#define I2C_ODR_CONFIGVALUE       ((uint32)((uint32)0U << 1U) \
-                                 | (uint32)((uint32)0U))
+#define I2C_DIR_CONFIGVALUE       ((uint32)((uint32)1U << 1U) \
+                                 | (uint32)((uint32)1U))
+#define I2C_ODR_CONFIGVALUE       ((uint32)((uint32)1U << 1U) \
+                                 | (uint32)((uint32)1U))
 #define I2C_PD_CONFIGVALUE        ((uint32)((uint32)0U << 1U) \
                                  | (uint32)((uint32)0U))
 #define I2C_PSL_CONFIGVALUE       ((uint32)((uint32)1U << 1U) \

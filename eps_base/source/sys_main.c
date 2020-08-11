@@ -46,6 +46,8 @@
 #include "gio.h"
 #include "het.h"
 #include "FreeRTOS.h"
+#include "i2c.h"
+#include "rtcmk.h"
 /* USER CODE END */
 
 /* Include Files */
@@ -64,28 +66,37 @@
 */
 
 /* USER CODE BEGIN (2) */
-extern void main_blinky( void );
+
 /* USER CODE END */
 
-int main(void) {
+int main(void)
+{
 /* USER CODE BEGIN (3) */
-    gioInit();
-    gioSetDirection(gioPORTB, 0xFFFFFFFF);
-    main_blinky();
 
-    /*
-    int temp, delay;
-    delay = 0x200000;
-    gioInit();
-    gioSetDirection(gioPORTB, 0xFFFFFFFF);
-    while (1) {
-        gioToggleBit(gioPORTB, 1);
-        for (temp = 0; temp < delay; temp++);
-        gioToggleBit(gioPORTB, 1);
-        for (temp = 0; temp < delay; temp++);
+    //The following example resets the RTC time to 0, waits a bit, and reads the time to check that it is functioning properly
 
+
+    uint8_t retval = 0;
+    uint8_t slave_add = 0b0110010;
+    uint8_t data = 0;
+    i2cInit();
+    i2cSetSlaveAdd(i2cREG1, slave_add);
+
+    printf("Resetting time");
+    retval = RTCMK_ResetTime(slave_add);
+    if (retval != 0){
+        while(1);
     }
-    */
+
+    //Wait for a few seconds here using a breakpoint...
+
+    retval = RTCMK_ReadSeconds(slave_add, &data);
+    if (retval != 0){
+        while(1);
+    }
+    printf(" %d seconds elapsed\n", data);
+
+
 /* USER CODE END */
 
     return 0;
