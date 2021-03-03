@@ -8,8 +8,8 @@
 #ifndef EX2_SERVICES_PLATFORM_OBC_EPS_H_
 #define EX2_SERVICES_PLATFORM_OBC_EPS_H_
 
-#include <queue.h>
-#include "system.h"
+#include <main/system.h>
+#include <os_queue.h>
 #include "services.h"
 
 /* Binary Commands to EPS */

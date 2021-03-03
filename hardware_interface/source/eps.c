@@ -24,12 +24,13 @@
  */
 
 #include <FreeRTOS.h>
-#include <task.h>
+#include <os_task.h>
+#include <os_semphr.h>
 #include <csp/csp.h>
 #include <csp/csp_endian.h>
+#include <main/system.h>
 
 #include "eps.h"
-#include "system.h"
 
 void prv_instantaneous_telemetry_letoh (eps_instantaneous_telemetry_t *telembuf);
 static inline void prv_set_instantaneous_telemetry (eps_instantaneous_telemetry_t telembuf);

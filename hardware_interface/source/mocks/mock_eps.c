@@ -5,13 +5,13 @@
  *      Author: Andrew
  */
 #include <FreeRTOS.h>
-#include <task.h>
+#include <os_task.h>
 #include <csp/csp.h>
 #include <csp/csp_endian.h>
 
-#include "system.h"
+#include "util/service_utilities.h"
+#include "main/system.h"
 #include "eps.h"
-#include "service_utilities.h"
 
 static SAT_returnState prv_fill_dummy_data(csp_packet_t *packet);
 void nop();
