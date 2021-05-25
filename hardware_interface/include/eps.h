@@ -28,8 +28,6 @@
 #define EPS_REQUEST_TIMEOUT 1000
 #define EPS_INSTANTANEOUS_TELEMETRY 20
 
-#define EPS_APP_ID 4
-
 QueueHandle_t eps_gatekeeper_q;
 
 typedef struct eps_t eps_t;
@@ -107,5 +105,8 @@ eps_instantaneous_telemetry_t get_eps_instantaneous_telemetry();
 void EPS_getHK(eps_instantaneous_telemetry_t* telembuf);
 eps_mode_e get_eps_batt_mode();
 void prv_instantaneous_telemetry_letoh (eps_instantaneous_telemetry_t *telembuf);
+// If changing the two functions below, update system tasks, too.
+int8_t eps_get_pwr_chnl(uint8_t pwr_chnl_port);
+void eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool bit);
 
 #endif /* EX2_SERVICES_PLATFORM_OBC_EPS_H_ */
