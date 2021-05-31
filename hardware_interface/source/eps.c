@@ -58,7 +58,7 @@ SAT_returnState eps_refresh_instantaneous_telemetry() {
                            sizeof(eps_instantaneous_telemetry_t), CSP_O_CRC32);
     // data is little endian, must convert to host order
     // refer to the NanoAvionics datasheet for details
-//    prv_instantaneous_telemetry_letoh(&telembuf);
+    prv_instantaneous_telemetry_letoh(&telembuf);
     prv_set_instantaneous_telemetry(telembuf);
     return SATR_OK;
 }
@@ -122,29 +122,29 @@ void prv_instantaneous_telemetry_letoh (eps_instantaneous_telemetry_t *telembuf)
     }
     for (i = 0; i < 4; i++) {
         telembuf->mpptConverterVoltage[i] = csp_letoh16(telembuf->mpptConverterVoltage[i]);
-        telembuf->OutputConverterVoltage[i] = csp_letoh16(telembuf->OutputConverterVoltage[i]);
     }
     for (i = 0; i < 8; i++) {
         telembuf->curSolarPanels[i] = csp_letoh16(telembuf->curSolarPanels[i]);
+        telembuf->OutputConverterVoltage[i] = csp_letoh16(telembuf->OutputConverterVoltage[i]);
     }
-    for (i = 0; i < 10; i++) {
+    for (i = 0; i < 18; i++) {
         telembuf->curOutput[i] = csp_letoh16(telembuf->curOutput[i]);
         telembuf->outputOnDelta[i] = csp_letoh16(telembuf->outputOnDelta[i]);
         telembuf->outputOffDelta[i] = csp_letoh16(telembuf->outputOffDelta[i]);
-        telembuf->outputFaultCnt[i] = csp_letoh32(telembuf->outputFaultCnt[i]);
     }
-    for (i = 0; i < 12; i++) {
-        telembuf->temp[i] = csp_letoh16(telembuf->temp[i]);
-    }
+
     telembuf->vBatt = csp_letoh16(telembuf->vBatt);
     telembuf->curSolar = csp_letoh16(telembuf->curSolar);
     telembuf->curBattIn = csp_letoh16(telembuf->curBattIn);
     telembuf->curBattOut = csp_letoh16(telembuf->curBattOut);
-    telembuf->outputStatus = csp_letoh16(telembuf->outputStatus);
+    telembuf->outputStatus = csp_letoh32(telembuf->outputStatus);
 
-    telembuf->outputFaultStatus = csp_letoh16(telembuf->outputFaultStatus);
+    telembuf->outputFaultStatus = csp_letoh32(telembuf->outputFaultStatus);
     telembuf->wdt_gs_time_left = csp_letoh32(telembuf->wdt_gs_time_left);
     telembuf->wdt_gs_counter = csp_letoh32(telembuf->wdt_gs_counter);
-    telembuf->rstReason = csp_letoh32(telembuf->rstReason);
     telembuf->bootCnt = csp_letoh32(telembuf->bootCnt);
+
+    telembuf->uptimeInS = csp_letoh32(telembuf->uptimeInS);
+    telembuf->PingWdt_toggles = csp_letoh16(telembuf->PingWdt_toggles);
+    telembuf->timestampInS = csp_letoh64(telembuf->timestampInS);
 }
