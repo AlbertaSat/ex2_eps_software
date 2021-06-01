@@ -75,7 +75,7 @@ struct __attribute__((packed)) eps_instantaneous_telemetry {
     uint8_t outputConverterState;
     uint32_t outputStatus; //18-bits
     uint32_t outputFaultStatus; //18-bits
-    int8_t reserved[2];// From outputStatus to outputFaultCnt, there's a 2-byte conflict with the ICD-R6
+    uint16_t protectedOutputAccessCnt;
     uint16_t outputOnDelta[18]; //seconds
     uint16_t outputOffDelta[18]; //seconds
     uint8_t outputFaultCnt[18];
@@ -86,8 +86,6 @@ struct __attribute__((packed)) eps_instantaneous_telemetry {
     uint8_t batHeaterState; //0 –off, 1 –on
     uint16_t PingWdt_toggles; // Total number of power channel toggles caused by failed ping watchdog
     uint8_t PingWdt_turnOffs; // Total number of power channel offs caused by failed ping watchdog
-//    int8_t ThermalPortTemp[8]; // Temperatures of thermal protection sensors // Conflict with ICD-R6
-
 };
 
 enum eps_mode {
