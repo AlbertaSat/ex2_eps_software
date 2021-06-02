@@ -87,6 +87,30 @@ void eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool bit){
 
 }
 
+/**
+ * @brief Convert 64-bit number from host byte order to little endian byte order
+ * @attention csp_letoh64 does not work correctly. Moving this function to
+ * csp_endian also returns a wrong value. The reason is probably the limitations
+ * of MCU on processing double precision floats.
+ */
+inline double __attribute__ ((__const__)) csp_letohd(double d) {
+    union v {
+        double       d;
+        uint64_t     i;
+    };
+    union v val;
+    val.d = d;
+    val.i = (((val.i & 0xff00000000000000LL) >> 56) |
+                ((val.i & 0x00000000000000ffLL) << 56) |
+                ((val.i & 0x00ff000000000000LL) >> 40) |
+                ((val.i & 0x000000000000ff00LL) << 40) |
+                ((val.i & 0x0000ff0000000000LL) >> 24) |
+                ((val.i & 0x0000000000ff0000LL) << 24) |
+                ((val.i & 0x000000ff00000000LL) >>  8) |
+                ((val.i & 0x00000000ff000000LL) <<  8));
+    return val.d;
+}
+
 /*------------------------------Private-------------------------------------*/
 
 static eps_t* prv_get_eps() {
@@ -146,5 +170,5 @@ void prv_instantaneous_telemetry_letoh (eps_instantaneous_telemetry_t *telembuf)
 
     telembuf->uptimeInS = csp_letoh32(telembuf->uptimeInS);
     telembuf->PingWdt_toggles = csp_letoh16(telembuf->PingWdt_toggles);
-    telembuf->timestampInS = csp_letoh64(telembuf->timestampInS);
+    telembuf->timestampInS = csp_letohd(telembuf->timestampInS);
 }

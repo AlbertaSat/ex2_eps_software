@@ -105,5 +105,6 @@ void prv_instantaneous_telemetry_letoh (eps_instantaneous_telemetry_t *telembuf)
 // If changing the two functions below, update system tasks, too.
 int8_t eps_get_pwr_chnl(uint8_t pwr_chnl_port);
 void eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool bit);
+double csp_letohd(double d);
 
 #endif /* EX2_SERVICES_PLATFORM_OBC_EPS_H_ */
