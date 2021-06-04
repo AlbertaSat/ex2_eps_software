@@ -13,7 +13,7 @@
  */
 /**
  * @file eps.h
- * @author Andrew Rooney
+ * @author Andrew Rooney, Dustin Wagner
  * @date 2020-12-28
  */
 #ifndef EX2_SERVICES_PLATFORM_OBC_EPS_H_
@@ -100,6 +100,7 @@ typedef enum eps_mode eps_mode_e;
 
 SAT_returnState eps_refresh_instantaneous_telemetry();
 eps_instantaneous_telemetry_t get_eps_instantaneous_telemetry();
+void EPS_getHK(eps_instantaneous_telemetry_t* telembuf);
 eps_mode_e get_eps_batt_mode();
 void prv_instantaneous_telemetry_letoh (eps_instantaneous_telemetry_t *telembuf);
 // If changing the two functions below, update system tasks, too.
