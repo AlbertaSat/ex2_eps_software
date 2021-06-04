@@ -58,7 +58,7 @@ typedef struct __attribute__((packed)) {
 struct __attribute__((packed)) eps_instantaneous_telemetry {
     uint8_t cmd; //value 0
     int8_t status; //0 –on success
-    double timestampInS; // not sure
+    double timestampInS; // with ms precision
     uint32_t uptimeInS;
     uint32_t bootCnt; // system startup count
     uint32_t wdt_gs_time_left; //seconds
