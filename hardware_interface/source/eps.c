@@ -122,8 +122,6 @@ void EPS_getHK(eps_instantaneous_telemetry_t* telembuf) {
     }
     for (i = 0; i < 4;  i++) {
         telembuf->mpptConverterVoltage[i] = eps->hk_telemetery.mpptConverterVoltage[i];
-        telembuf->outputConverterState[i] = eps->hk_telemetery.outputConverterState[i];
-        telembuf->reserved4[i] = eps->hk_telemetery.reserved4[i];
     }
     for (i = 0; i < 8;  i++) {
         telembuf->curSolarPanels[i] = eps->hk_telemetery.curSolarPanels[i];
