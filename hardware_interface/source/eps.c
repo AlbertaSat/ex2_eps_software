@@ -141,16 +141,29 @@ void EPS_getHK(eps_instantaneous_telemetry_t* telembuf) {
 }
 
 eps_mode_e get_eps_batt_mode() {
+    eps_refresh_instantaneous_telemetry();
     eps_instantaneous_telemetry_t eps = get_eps_instantaneous_telemetry();
     return (eps_mode_e) eps.battMode;
 }
 
-int8_t eps_get_pwr_chnl(uint8_t pwr_chnl_port){
-
+uint8_t eps_get_pwr_chnl(uint8_t pwr_chnl_port){
+    eps_refresh_instantaneous_telemetry();
+    eps_instantaneous_telemetry_t eps = get_eps_instantaneous_telemetry();
+    uint32_t outputStatus = eps.outputStatus; // a codeword that has the status of all channels
+    uint8_t pwr_chnl_status = (uint8_t) (outputStatus >> (pwr_chnl_port - 1)) & 1; // chnl_port : 1-18
+    return pwr_chnl_status;
 }
 
 void eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool bit){
-
+    int8_t response[2];
+    uint8_t cmd[5] = {0};
+    cmd[0] = 0; //single output control
+    cmd[1] = pwr_chnl_port;
+    cmd[2] = (uint8_t) bit;
+    // delay = 0 so cmd{4] = cmd[5] = 0
+    csp_transaction_w_opts(CSP_PRIO_LOW, EPS_APP_ID, EPS_POWER_CONTROL,
+                           10000, &cmd, sizeof(cmd), &response,
+                           sizeof(response), CSP_O_CRC32);
 }
 
 /**
