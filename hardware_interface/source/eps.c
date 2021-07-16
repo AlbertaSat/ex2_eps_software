@@ -156,7 +156,7 @@ uint8_t eps_get_pwr_chnl(uint8_t pwr_chnl_port){
 }
 
 /* Sends a command to eps to set the status of a power channel */
-void eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool status){
+int8_t eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool status){
     int8_t response[2];
     uint8_t cmd[5] = {0};
     cmd[0] = 0; //single output control
@@ -166,6 +166,7 @@ void eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool status){
     csp_transaction_w_opts(CSP_PRIO_LOW, EPS_APP_ID, EPS_POWER_CONTROL,
                            10000, &cmd, sizeof(cmd), &response,
                            sizeof(response), CSP_O_CRC32);
+    return response[1];
 }
 
 /**
