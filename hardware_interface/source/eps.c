@@ -24,20 +24,20 @@
  */
 
 #include <FreeRTOS.h>
-#include <os_task.h>
-#include <os_semphr.h>
 #include <csp/csp.h>
 #include <csp/csp_endian.h>
 #include <main/system.h>
+#include <os_semphr.h>
+#include <os_task.h>
 
-#include "services.h"
 #include "eps.h"
+#include "services.h"
 
-void prv_instantaneous_telemetry_letoh (eps_instantaneous_telemetry_t *telembuf);
-static inline void prv_set_instantaneous_telemetry (eps_instantaneous_telemetry_t telembuf);
+void prv_instantaneous_telemetry_letoh(eps_instantaneous_telemetry_t *telembuf);
+static inline void prv_set_instantaneous_telemetry(eps_instantaneous_telemetry_t telembuf);
 static inline void prv_get_lock(eps_t *eps);
 static inline void prv_give_lock(eps_t *eps);
-static eps_t* prv_get_eps();
+static eps_t *prv_get_eps();
 
 struct eps_t {
     eps_instantaneous_telemetry_t hk_telemetery;
@@ -53,9 +53,8 @@ SAT_returnState eps_refresh_instantaneous_telemetry() {
     eps_instantaneous_telemetry_t telembuf;
     int res = csp_ping(EPS_APP_ID, 10000, 100, CSP_O_NONE);
 
-    csp_transaction_w_opts(CSP_PRIO_LOW, EPS_APP_ID, EPS_INSTANTANEOUS_TELEMETRY,
-                           10000, &cmd, sizeof(cmd), &telembuf,
-                           sizeof(eps_instantaneous_telemetry_t), CSP_O_CRC32);
+    csp_transaction_w_opts(CSP_PRIO_LOW, EPS_APP_ID, EPS_INSTANTANEOUS_TELEMETRY, 10000, &cmd, sizeof(cmd),
+                           &telembuf, sizeof(eps_instantaneous_telemetry_t), CSP_O_CRC32);
     // data is little endian, must convert to host order
     // refer to the NanoAvionics datasheet for details
     prv_instantaneous_telemetry_letoh(&telembuf);
@@ -88,7 +87,7 @@ eps_instantaneous_telemetry_t get_eps_instantaneous_telemetry() {
  *      but currently no return
  *
  */
-void EPS_getHK(eps_instantaneous_telemetry_t* telembuf) {
+void EPS_getHK(eps_instantaneous_telemetry_t *telembuf) {
     eps_t *eps;
     eps = prv_get_eps();
     prv_get_lock(eps);
@@ -117,13 +116,13 @@ void EPS_getHK(eps_instantaneous_telemetry_t* telembuf) {
     telembuf->PingWdt_turnOffs = eps->hk_telemetery.PingWdt_turnOffs;
 
     uint8_t i;
-    for (i = 0; i < 2;  i++) {
+    for (i = 0; i < 2; i++) {
         telembuf->AOcurOutput[i] = eps->hk_telemetery.AOcurOutput[i];
     }
-    for (i = 0; i < 4;  i++) {
+    for (i = 0; i < 4; i++) {
         telembuf->mpptConverterVoltage[i] = eps->hk_telemetery.mpptConverterVoltage[i];
     }
-    for (i = 0; i < 8;  i++) {
+    for (i = 0; i < 8; i++) {
         telembuf->curSolarPanels[i] = eps->hk_telemetery.curSolarPanels[i];
         telembuf->OutputConverterVoltage[i] = eps->hk_telemetery.OutputConverterVoltage[i];
     }
@@ -143,28 +142,27 @@ void EPS_getHK(eps_instantaneous_telemetry_t* telembuf) {
 eps_mode_e get_eps_batt_mode() {
     eps_refresh_instantaneous_telemetry();
     eps_instantaneous_telemetry_t eps = get_eps_instantaneous_telemetry();
-    return (eps_mode_e) eps.battMode;
+    return (eps_mode_e)eps.battMode;
 }
 
 /* Gets the status of the power channel */
-uint8_t eps_get_pwr_chnl(uint8_t pwr_chnl_port){
+uint8_t eps_get_pwr_chnl(uint8_t pwr_chnl_port) {
     eps_refresh_instantaneous_telemetry();
     eps_instantaneous_telemetry_t eps = get_eps_instantaneous_telemetry();
     uint32_t outputStatus = eps.outputStatus; // a codeword that has the status of all channels
-    uint8_t pwr_chnl_status = (uint8_t) (outputStatus >> (pwr_chnl_port - 1)) & 1; // chnl_port : 1-18
+    uint8_t pwr_chnl_status = (uint8_t)(outputStatus >> (pwr_chnl_port - 1)) & 1; // chnl_port : 1-18
     return pwr_chnl_status;
 }
 
 /* Sends a command to eps to set the status of a power channel */
-int8_t eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool status){
+int8_t eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool status) {
     int8_t response[2];
     uint8_t cmd[5] = {0};
-    cmd[0] = 0; //single output control
+    cmd[0] = 0; // single output control
     cmd[1] = pwr_chnl_port;
     cmd[2] = status;
     // delay = 0 so cmd{4] = cmd[5] = 0
-    csp_transaction_w_opts(CSP_PRIO_LOW, EPS_APP_ID, EPS_POWER_CONTROL,
-                           10000, &cmd, sizeof(cmd), &response,
+    csp_transaction_w_opts(CSP_PRIO_LOW, EPS_APP_ID, EPS_POWER_CONTROL, 10000, &cmd, sizeof(cmd), &response,
                            sizeof(response), CSP_O_CRC32);
     return response[1];
 }
@@ -175,27 +173,23 @@ int8_t eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool status){
  * csp_endian also returns a wrong value. The reason is probably the limitations
  * of MCU on processing double precision floats.
  */
-inline double __attribute__ ((__const__)) csp_letohd(double d) {
+inline double __attribute__((__const__)) csp_letohd(double d) {
     union v {
-        double       d;
-        uint64_t     i;
+        double d;
+        uint64_t i;
     };
     union v val;
     val.d = d;
-    val.i = (((val.i & 0xff00000000000000LL) >> 56) |
-                ((val.i & 0x00000000000000ffLL) << 56) |
-                ((val.i & 0x00ff000000000000LL) >> 40) |
-                ((val.i & 0x000000000000ff00LL) << 40) |
-                ((val.i & 0x0000ff0000000000LL) >> 24) |
-                ((val.i & 0x0000000000ff0000LL) << 24) |
-                ((val.i & 0x000000ff00000000LL) >>  8) |
-                ((val.i & 0x00000000ff000000LL) <<  8));
+    val.i = (((val.i & 0xff00000000000000LL) >> 56) | ((val.i & 0x00000000000000ffLL) << 56) |
+             ((val.i & 0x00ff000000000000LL) >> 40) | ((val.i & 0x000000000000ff00LL) << 40) |
+             ((val.i & 0x0000ff0000000000LL) >> 24) | ((val.i & 0x0000000000ff0000LL) << 24) |
+             ((val.i & 0x000000ff00000000LL) >> 8) | ((val.i & 0x00000000ff000000LL) << 8));
     return val.d;
 }
 
 /*------------------------------Private-------------------------------------*/
 
-static eps_t* prv_get_eps() {
+static eps_t *prv_get_eps() {
     if (!prvEps.eps_lock) {
         prvEps.eps_lock = xSemaphoreCreateMutex();
     }
@@ -213,7 +207,7 @@ static inline void prv_give_lock(eps_t *eps) {
     xSemaphoreGive(eps->eps_lock);
 }
 
-static inline void prv_set_instantaneous_telemetry (eps_instantaneous_telemetry_t telembuf) {
+static inline void prv_set_instantaneous_telemetry(eps_instantaneous_telemetry_t telembuf) {
     eps_t *eps = prv_get_eps();
     prv_get_lock(eps);
     eps->hk_telemetery = telembuf;
@@ -221,7 +215,7 @@ static inline void prv_set_instantaneous_telemetry (eps_instantaneous_telemetry_
     return;
 }
 
-void prv_instantaneous_telemetry_letoh (eps_instantaneous_telemetry_t *telembuf) {
+void prv_instantaneous_telemetry_letoh(eps_instantaneous_telemetry_t *telembuf) {
     uint8_t i;
     for (i = 0; i < 2; i++) {
         telembuf->AOcurOutput[i] = csp_letoh16(telembuf->AOcurOutput[i]);
