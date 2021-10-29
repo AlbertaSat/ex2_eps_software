@@ -34,13 +34,16 @@
 #include "services.h"
 
 void prv_instantaneous_telemetry_letoh(eps_instantaneous_telemetry_t *telembuf);
+void prv_set_startup_telemetry(eps_startup_telemetry_t telem_startup_buf);
 static inline void prv_set_instantaneous_telemetry(eps_instantaneous_telemetry_t telembuf);
+static inline void prv_set_startup_telemetry(eps_startup_telemetry_t telem_startup_buf);
 static inline void prv_get_lock(eps_t *eps);
 static inline void prv_give_lock(eps_t *eps);
 static eps_t *prv_get_eps();
 
 struct eps_t {
     eps_instantaneous_telemetry_t hk_telemetery;
+    eps_startup_telemetry_t hk_startup_telemetry;
     SemaphoreHandle_t eps_lock;
 };
 
@@ -70,8 +73,8 @@ SAT_returnState eps_refresh_startup_telemetry() {
                            &telem_startup_buf, sizeof(eps_startup_telemetry_t), CSP_0_CRC32);
     // data is little endian, must convert to host order
     // refer to the NanoAvionics datasheet for details
-    prv_instantaneous_telemetry_letoh(&telem_startup_buf);
-    prv_set_instantaneous_telemetry(telem_startup_buf);
+    prv_startup_telemetry_letoh(&telem_startup_buf);
+    prv_set_startup_telemetry(telem_startup_buf);
     return SATR_OK;
 }
 
@@ -84,6 +87,17 @@ eps_instantaneous_telemetry_t get_eps_instantaneous_telemetry() {
     telembuf = eps->hk_telemetery;
     prv_give_lock(eps);
     return telembuf;
+}
+
+eps_startup_telemetry_t get_eps_startup_telemetry() {
+    eps_startup_telemetry_t telem_startup_buf;
+    eps_t *eps;
+    eps = prv_get_eps();
+    prv_get_lock(eps);
+    configASSERT(eps);
+    telem_startup_buf = eps->hk_startup_telemetery;
+    prv_give_lock(eps);
+    return telem_startup_buf;
 }
 
 /**
@@ -100,12 +114,13 @@ eps_instantaneous_telemetry_t get_eps_instantaneous_telemetry() {
  *      but currently no return
  *
  */
-void EPS_getHK(eps_instantaneous_telemetry_t *telembuf) {
+void EPS_getHK(eps_instantaneous_telemetry_t *telembuf, eps_startup_telemetry_t *telem_startup_buf) {
     eps_t *eps;
     eps = prv_get_eps();
     prv_get_lock(eps);
     configASSERT(eps);
 
+    //General telemetry (defined in ICD Section 24.2.1)
     telembuf->cmd = eps->hk_telemetery.cmd;
     telembuf->status = eps->hk_telemetery.status;
     telembuf->timestampInS = eps->hk_telemetery.timestampInS;
@@ -148,6 +163,24 @@ void EPS_getHK(eps_instantaneous_telemetry_t *telembuf) {
     for (i = 0; i < 14; i++) {
         telembuf->temp[i] = eps->hk_telemetery.temp[i];
     }
+
+    //Startup telemetry (defined in ICD Section 24.2.2)
+    telem_startup_buf->timestamp = eps->hk_startup_telemetry.timestamp;
+    telem_startup_buf->last_reset_reason_reg = eps->hk_startup_telemetry.last_reset_reason_reg;
+    telem_startup_buf->bootCnt = eps->hk_startup_telemetry.bootCnt;
+    telem_startup_buf->FallbackConfigUsed = eps->hk_startup_telemetry.FallbackConfigUsed;
+    telem_startup_buf->rtcInit = eps->hk_startup_telemetry.rtcInit;
+    telem_startup_buf->rtcClkSourceLSE = eps->hk_startup_telemetry.rtcClkSourceLSE;
+    telem_startup_buf->flashAppInit = eps->hk_startup_telemetry.flashAppInit;
+    telem_startup_buf->Fram4kPartitionInit = eps->hk_startup_telemetry.Fram4kPartitionInit;
+    telem_startup_buf->Fram520kPartitionInit = eps->hk_startup_telemetry.Fram520kPartitionInit;
+    telem_startup_buf->intFlashPartitionInit = eps->hk_startup_telemetry.intFlashPartitionInit;
+    telem_startup_buf->FSInit = eps->hk_startup_telemetry.FSInit;
+    telem_startup_buf->FTInit = eps->hk_startup_telemetry.FTInit;
+    telem_startup_buf->supervisorInit = eps->hk_startup_telemetry.supervisorInit;
+    telem_startup_buf->uart1App = eps->hk_startup_telemetry.uart1App;
+    telem_startup_buf->uart2App = eps->hk_startup_telemetry.uart2App;
+    telem_startup_buf->tmp107Init = eps->hk_startup_telemetry.tmp107Init;
 
     prv_give_lock(eps);
 }
@@ -261,3 +294,34 @@ void prv_instantaneous_telemetry_letoh(eps_instantaneous_telemetry_t *telembuf) 
     telembuf->PingWdt_toggles = csp_letoh16(telembuf->PingWdt_toggles);
     telembuf->timestampInS = csp_letohd(telembuf->timestampInS);
 }
+
+static inline void prv_set_startup_telemetry(eps_startup_telemetry_t *telem_startup_buf) {
+    eps_t *eps = prv_get_eps();
+    prv_get_lock(eps);
+    eps->hk_startup_telemetery = telem_startup_buf;
+    prv_give_lock(eps);
+    return;
+}
+
+void prv_startup_telemetry_letoh(eps_startup_telemetry_t *telem_startup_buf) {
+    uint8_t i;
+
+    telem_startup_buf->timestamp = csp_letoh16(telem_startup_buf->timestamp);
+    telem_startup_buf->last_reset_reason_reg = csp_letoh16(telem_startup_buf->last_reset_reason_reg);
+    telem_startup_buf->bootCnt = csp_letoh16(telem_startup_buf->bootCnt);
+    telem_startup_buf->FallbackConfigUsed = csp_letoh16(telem_startup_buf->FallbackConfigUsed);
+    telem_startup_buf->rtcInit = csp_letoh32(telem_startup_buf->rtcInit);
+    telem_startup_buf->rtcClkSourceLSE = csp_letoh32(telem_startup_buf->rtcClkSourceLSE);
+    telem_startup_buf->flashAppInit = csp_letoh32(telem_startup_buf->flashAppInit);
+    telem_startup_buf->Fram4kPartitionInit = csp_letoh32(telem_startup_buf->Fram4kPartitionInit);
+    telem_startup_buf->Fram520kPartitionInit = csp_letoh32(telem_startup_buf->Fram520kPartitionInit);
+    telem_startup_buf->intFlashPartitionInit = csp_letoh32(telem_startup_buf->intFlashPartitionInit);
+    telem_startup_buf->FSInit = csp_letoh16(telem_startup_buf->FSInit);
+    telem_startup_buf->FTInit = csp_letohd(telem_startup_buf->FTInit);
+    telem_startup_buf->supervisorInit = csp_letohd(telem_startup_buf->supervisorInit);
+    telem_startup_buf->uart1App = csp_letohd(telem_startup_buf->uart1App);
+    telem_startup_buf->uart2App = csp_letohd(telem_startup_buf->uart2App);
+    telem_startup_buf->tmp107Init = csp_letohd(telem_startup_buf->tmp107Init);
+    
+}
+
