@@ -119,9 +119,11 @@ typedef enum eps_mode eps_mode_e;
 SAT_returnState eps_refresh_instantaneous_telemetry();
 SAT_returnState eps_refresh_startup_telemetry();
 eps_instantaneous_telemetry_t get_eps_instantaneous_telemetry();
-void EPS_getHK(eps_instantaneous_telemetry_t *telembuf);
+eps_startup_telemetry_t get_eps_startup_telemetry();
+void EPS_getHK(eps_instantaneous_telemetry_t *telembuf, eps_startup_telemetry_t *telem_startup_buf);
 eps_mode_e get_eps_batt_mode();
 void prv_instantaneous_telemetry_letoh(eps_instantaneous_telemetry_t *telembuf);
+void prv_startup_telemetry_letoh(eps_startup_telemetry_t *telem_startup_buf);
 // If changing the two functions below, update system tasks, too.
 uint8_t eps_get_pwr_chnl(uint8_t pwr_chnl_port);
 int8_t eps_set_pwr_chnl(uint8_t pwr_chnl_port, bool status);
