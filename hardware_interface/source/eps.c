@@ -62,6 +62,19 @@ SAT_returnState eps_refresh_instantaneous_telemetry() {
     return SATR_OK;
 }
 
+SAT_returnState eps_refresh_startup_telemetry() {
+    uint8_t cmd = 1; // ' subservice' command defined in ICD Section 24.2.2
+    eps_startup_telemetry_t telem_startup_buf;
+    
+    csp_transaction_w_opts(CSP_PRIO_LOW, EPS_APP_ID, EPS_INSTANTANEOUS_TELEMETRY, 10000, &cmd, sizeof(cmd),
+                           &telem_startup_buf, sizeof(eps_startup_telemetry_t), CSP_0_CRC32);
+    // data is little endian, must convert to host order
+    // refer to the NanoAvionics datasheet for details
+    prv_instantaneous_telemetry_letoh(&telem_startup_buf);
+    prv_set_instantaneous_telemetry(telem_startup_buf);
+    return SATR_OK;
+}
+
 eps_instantaneous_telemetry_t get_eps_instantaneous_telemetry() {
     eps_instantaneous_telemetry_t telembuf;
     eps_t *eps;
