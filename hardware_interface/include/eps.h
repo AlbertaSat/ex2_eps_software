@@ -111,6 +111,7 @@ struct __attribute__((packed)) eps_startup_telemetry {
     int8_t tmp107Init;
 };
 
+
 enum eps_mode { critical = 0, safe = 1, normal = 2, full = 3 };
 
 typedef struct eps_instantaneous_telemetry eps_instantaneous_telemetry_t;
