@@ -28,6 +28,8 @@
 #define EPS_REQUEST_TIMEOUT 1000
 #define EPS_INSTANTANEOUS_TELEMETRY 7
 #define EPS_POWER_CONTROL 14
+#define OFF 0
+#define ON 1
 
 QueueHandle_t eps_gatekeeper_q;
 
@@ -58,7 +60,7 @@ typedef struct __attribute__((packed)) {
 
 struct __attribute__((packed)) eps_instantaneous_telemetry {
     uint8_t cmd;         // value 0
-    int8_t status;       // 0 –on success
+    int8_t status;       // 0 ï¿½on success
     double timestampInS; // with ms precision
     uint32_t uptimeInS;
     uint32_t bootCnt;          // system startup count
@@ -80,12 +82,12 @@ struct __attribute__((packed)) eps_instantaneous_telemetry {
     uint16_t outputOnDelta[18];  // seconds
     uint16_t outputOffDelta[18]; // seconds
     uint8_t outputFaultCnt[18];
-    int8_t temp[14];       // 1-4 –MPPT converter temp, 5-8 –output converter temp, 9 –on-board battery temp, 10–12
-                           // –external battery pack temp, 13-14 -output expander temp
-    uint8_t battMode;      // 0 –critical, 1 –safe, 2 –normal, 3 –full
-    uint8_t mpptMode;      // 0 –HW, 1 –manual, 2 –auto, 3 –auto with timeout
-    uint8_t batHeaterMode; // 0 –manual, 1 –auto
-    uint8_t batHeaterState;   // 0 –off, 1 –on
+    int8_t temp[14]; // 1-4 ï¿½MPPT converter temp, 5-8 ï¿½output converter temp, 9 ï¿½on-board battery temp, 10ï¿½12
+                     // ï¿½external battery pack temp, 13-14 -output expander temp
+    uint8_t battMode;         // 0 ï¿½critical, 1 ï¿½safe, 2 ï¿½normal, 3 ï¿½full
+    uint8_t mpptMode;         // 0 ï¿½HW, 1 ï¿½manual, 2 ï¿½auto, 3 ï¿½auto with timeout
+    uint8_t batHeaterMode;    // 0 ï¿½manual, 1 ï¿½auto
+    uint8_t batHeaterState;   // 0 ï¿½off, 1 ï¿½on
     uint16_t PingWdt_toggles; // Total number of power channel toggles caused by failed ping watchdog
     uint8_t PingWdt_turnOffs; // Total number of power channel offs caused by failed ping watchdog
 };
