@@ -165,13 +165,15 @@ void EPS_getHK(eps_instantaneous_telemetry_t *telembuf, eps_startup_telemetry_t 
     }
 
     //Startup telemetry (defined in ICD Section 24.2.2)
+    telem_startup_buf->cmd = eps->hk_startup_telemetry.cmd;
+    telem_startup_buf->status = eps->hk_startup_telemetry.status;
     telem_startup_buf->timestamp = eps->hk_startup_telemetry.timestamp;
     telem_startup_buf->last_reset_reason_reg = eps->hk_startup_telemetry.last_reset_reason_reg;
     telem_startup_buf->bootCnt = eps->hk_startup_telemetry.bootCnt;
     telem_startup_buf->FallbackConfigUsed = eps->hk_startup_telemetry.FallbackConfigUsed;
     telem_startup_buf->rtcInit = eps->hk_startup_telemetry.rtcInit;
     telem_startup_buf->rtcClkSourceLSE = eps->hk_startup_telemetry.rtcClkSourceLSE;
-    telem_startup_buf->flashAppInit = eps->hk_startup_telemetry.flashAppInit;
+    //telem_startup_buf->flashAppInit = eps->hk_startup_telemetry.flashAppInit;
     telem_startup_buf->Fram4kPartitionInit = eps->hk_startup_telemetry.Fram4kPartitionInit;
     telem_startup_buf->Fram520kPartitionInit = eps->hk_startup_telemetry.Fram520kPartitionInit;
     telem_startup_buf->intFlashPartitionInit = eps->hk_startup_telemetry.intFlashPartitionInit;
@@ -306,22 +308,8 @@ static inline void prv_set_startup_telemetry(eps_startup_telemetry_t telem_start
 void prv_startup_telemetry_letoh(eps_startup_telemetry_t *telem_startup_buf) {
     uint8_t i;
 
-    telem_startup_buf->timestamp = csp_letoh16(telem_startup_buf->timestamp);
-    telem_startup_buf->last_reset_reason_reg = csp_letoh16(telem_startup_buf->last_reset_reason_reg);
-    telem_startup_buf->bootCnt = csp_letoh16(telem_startup_buf->bootCnt);
-    telem_startup_buf->FallbackConfigUsed = csp_letoh16(telem_startup_buf->FallbackConfigUsed);
-    telem_startup_buf->rtcInit = csp_letoh32(telem_startup_buf->rtcInit);
-    telem_startup_buf->rtcClkSourceLSE = csp_letoh32(telem_startup_buf->rtcClkSourceLSE);
-    telem_startup_buf->flashAppInit = csp_letoh32(telem_startup_buf->flashAppInit);
-    telem_startup_buf->Fram4kPartitionInit = csp_letoh32(telem_startup_buf->Fram4kPartitionInit);
-    telem_startup_buf->Fram520kPartitionInit = csp_letoh32(telem_startup_buf->Fram520kPartitionInit);
-    telem_startup_buf->intFlashPartitionInit = csp_letoh32(telem_startup_buf->intFlashPartitionInit);
-    telem_startup_buf->FSInit = csp_letoh16(telem_startup_buf->FSInit);
-    telem_startup_buf->FTInit = csp_letohd(telem_startup_buf->FTInit);
-    telem_startup_buf->supervisorInit = csp_letohd(telem_startup_buf->supervisorInit);
-    telem_startup_buf->uart1App = csp_letohd(telem_startup_buf->uart1App);
-    telem_startup_buf->uart2App = csp_letohd(telem_startup_buf->uart2App);
-    telem_startup_buf->tmp107Init = csp_letohd(telem_startup_buf->tmp107Init);
-    
-}
+    telem_startup_buf->timestamp = csp_letohd(telem_startup_buf->timestamp);
+    telem_startup_buf->last_reset_reason_reg = csp_letoh32(telem_startup_buf->last_reset_reason_reg);
+    telem_startup_buf->bootCnt = csp_letoh32(telem_startup_buf->bootCnt);
 
+}
